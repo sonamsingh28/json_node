@@ -1,0 +1,5 @@
+name: JSON Node
+type: module
+description: 'Returns JSON node data based on Site API key.'
+core: 8.x
+package: 'Custom'

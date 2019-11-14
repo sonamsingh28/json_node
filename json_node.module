@@ -1,0 +1,71 @@
+<?php
+
+/**
+ * @file
+ * Contains json_node.module.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Implements hook_help().
+ */
+function json_node_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the json_node module.
+    case 'help.page.json_node':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Returns JSON node data based on Site API key.') . '</p>';
+      return $output;
+
+    default:
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function json_node_form_alter(&$form, $form_state, $form_id) {
+  switch ($form_id) {
+    case 'system_site_information_settings':
+      // Fetch Site API key value.
+      $api_key = \Drupal::config('system.site')->get('siteapikey');
+      $api_key = empty($api_key) ? 'No API Key yet' : $api_key;
+
+      // Add Site API Key textfield.
+      $form['siteapikey'] = [
+        '#type' => 'textfield',
+        '#title' => t('Site API Key'),
+        '#description' => t('Enter the Site API Key that will be used to fetch node data.'),
+        '#default_value' => $api_key,
+      ];
+
+      if (isset($form['actions']['submit'])) {
+        // Add a custom submit handler.
+        $form['actions']['submit']['#submit'][] = 'json_node_custom_submit';
+        // Update submit button text.
+        $form['actions']['submit']['#value'] = t('Update Configuration');
+      }
+      break;
+  }
+}
+
+/**
+ * Additional submit handler for system_site_information_settings form.
+ */
+function json_node_custom_submit($form, FormStateInterface $form_state) {
+  // Fetch api key value.
+  $api_key = $form_state->getValue('siteapikey');
+
+  // Save api key.
+  $config = \Drupal::service('config.factory')
+    ->getEditable('system.site')
+    ->set('siteapikey', $api_key)
+    ->save();
+
+  drupal_set_message(t('The Site API Key %apikey has been saved.', [
+    '%apikey' => $api_key,
+  ]));
+}
